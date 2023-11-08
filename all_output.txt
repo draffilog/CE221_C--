@@ -1,0 +1,251 @@
+Assumptions:
+1. The data types for the private members of the Person class will be as follows: name (string), age (int), place of birth (string), password (string), balance (double), and transactions (vector of strings).
+2. The .txt file will have each user's information on a new line in the following format: name,age,place of birth,password,balance,transaction1,transaction2,transaction3.
+3. User authentication will be done by comparing the entered name and password with the ones stored in the .txt file.
+4. All variables in the main will be dynamically allocated using the new keyword.
+5. The iostream library will be used for input and output operations, and the using namespace std; directive will be used to avoid having to use the std:: prefix.
+6. The code will be written in standard C++ and should be compatible with any Windows system with a C++ compiler.
+
+Core classes, functions, methods:
+1. Class Person: This class will represent a user in the banking system. It will have private members for the user's name, age, place of birth, password, balance, and transactions, and public methods for getting and setting these values.
+2. Function authenticateUser: This function will take a name and password as input, and check if they match any user in the .txt file. If a match is found, it will return a Person object with the user's information.
+3. Function registerUser: This function will take a Person object as input, and add the user's information to the .txt file.
+4. Function makeTransaction: This function will take a Person object and a transaction string as input, and add the transaction to the user's list of transactions in the .txt file.
+5. Function printUser: This function will take a Person object as input, and print the user's information (except password) and transactions.
+
+Now, let's write the code for each file.
+
+person.h
+```cpp
+#include <string>
+#include <vector>
+
+class Person {
+private:
+    std::string name;
+    int age;
+    std::string placeOfBirth;
+    std::string password;
+    double balance;
+    std::vector<std::string> transactions;
+
+public:
+    Person(std::string name, int age, std::string placeOfBirth, std::string password, double balance, std::vector<std::string> transactions);
+    std::string getName();
+    int getAge();
+    std::string getPlaceOfBirth();
+    std::string getPassword();
+    double getBalance();
+    std::vector<std::string> getTransactions();
+    void setName(std::string name);
+    void setAge(int age);
+    void setPlaceOfBirth(std::string placeOfBirth);
+    void setPassword(std::string password);
+    void setBalance(double balance);
+    void setTransactions(std::vector<std::string> transactions);
+    void addTransaction(std::string transaction);
+};
+```
+
+person.cpp
+```cpp
+#include "person.h"
+
+Person::Person(std::string name, int age, std::string placeOfBirth, std::string password, double balance, std::vector<std::string> transactions) {
+    this->name = name;
+    this->age = age;
+    this->placeOfBirth = placeOfBirth;
+    this->password = password;
+    this->balance = balance;
+    this->transactions = transactions;
+}
+
+std::string Person::getName() {
+    return this->name;
+}
+
+int Person::getAge() {
+    return this->age;
+}
+
+std::string Person::getPlaceOfBirth() {
+    return this->placeOfBirth;
+}
+
+std::string Person::getPassword() {
+    return this->password;
+}
+
+double Person::getBalance() {
+    return this->balance;
+}
+
+std::vector<std::string> Person::getTransactions() {
+    return this->transactions;
+}
+
+void Person::setName(std::string name) {
+    this->name = name;
+}
+
+void Person::setAge(int age) {
+    this->age = age;
+}
+
+void Person::setPlaceOfBirth(std::string placeOfBirth) {
+    this->placeOfBirth = placeOfBirth;
+}
+
+void Person::setPassword(std::string password) {
+    this->password = password;
+}
+
+void Person::setBalance(double balance) {
+    this->balance = balance;
+}
+
+void Person::setTransactions(std::vector<std::string> transactions) {
+    this->transactions = transactions;
+}
+
+void Person::addTransaction(std::string transaction) {
+    this->transactions.push_back(transaction);
+}
+```
+
+main.cpp
+```cpp
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <vector>
+#include "person.h"
+
+using namespace std;
+
+Person* authenticateUser(string name, string password) {
+    ifstream file("users.txt");
+    string line;
+    while (getline(file, line)) {
+        stringstream ss(line);
+        string token;
+        getline(ss, token, ',');
+        if (token == name) {
+            getline(ss, token, ',');
+            int age = stoi(token);
+            getline(ss, token, ',');
+            string placeOfBirth = token;
+            getline(ss, token, ',');
+            if (token == password) {
+                getline(ss, token, ',');
+                double balance = stod(token);
+                vector<string> transactions;
+                while (getline(ss, token, ',')) {
+                    transactions.push_back(token);
+                }
+                return new Person(name, age, placeOfBirth, password, balance, transactions);
+            }
+        }
+    }
+    return nullptr;
+}
+
+void registerUser(Person* person) {
+    ofstream file("users.txt", ios::app);
+    file << person->getName() << "," << person->getAge() << "," << person->getPlaceOfBirth() << "," << person->getPassword() << "," << person->getBalance();
+    for (string transaction : person->getTransactions()) {
+        file << "," << transaction;
+    }
+    file << "\n";
+}
+
+void makeTransaction(Person* person, string transaction) {
+    person->addTransaction(transaction);
+    registerUser(person);
+}
+
+void printUser(Person* person) {
+    cout << "Welcome " << person->getName() << "!\n";
+    cout << "Your age is " << person->getAge() << "\n";
+    cout << "You were born in " << person->getPlaceOfBirth() << ".\n";
+    cout << "Your balance is £" << person->getBalance() << ".\n";
+    cout << "Your recent transactions are\n";
+    for (string transaction : person->getTransactions()) {
+        cout << "- " << transaction << "\n";
+    }
+}
+
+int main() {
+    while (true) {
+        cout << "Please select a number for the option of:\n";
+        cout << "1- Login\n";
+        cout << "2- Register\n";
+        cout << "3- Make a transaction\n";
+        cout << "4- Exit\n";
+        cout << "Option: ";
+        int option;
+        cin >> option;
+        if (option == 1) {
+            cout << "Enter name: ";
+            string name;
+            cin >> name;
+            cout << "Enter password: ";
+            string password;
+            cin >> password;
+            Person* person = authenticateUser(name, password);
+            if (person != nullptr) {
+                printUser(person);
+            } else {
+                cout << "Invalid name or password.\n";
+            }
+        } else if (option == 2) {
+            cout << "Enter name: ";
+            string name;
+            cin >> name;
+            cout << "Enter age: ";
+            int age;
+            cin >> age;
+            cout << "Enter place of birth: ";
+            string placeOfBirth;
+            cin >> placeOfBirth;
+            cout << "Enter password: ";
+            string password;
+            cin >> password;
+            cout << "Enter initial balance: ";
+            double balance;
+            cin >> balance;
+            cout << "Enter number of initial transactions: ";
+            int numTransactions;
+            cin >> numTransactions;
+            vector<string> transactions;
+            for (int i = 0; i < numTransactions; i++) {
+                cout << "Enter transaction " << i + 1 << ": ";
+                string transaction;
+                cin >> transaction;
+                transactions.push_back(transaction);
+            }
+            Person* person = new Person(name, age, placeOfBirth, password, balance, transactions);
+            registerUser(person);
+        } else if (option == 3) {
+            cout << "Enter name: ";
+            string name;
+            cin >> name;
+            cout << "Enter password: ";
+            string password;
+            cin >> password;
+            Person* person = authenticateUser(name, password);
+            if (person != nullptr) {
+                cout << "Enter transaction: ";
+                string transaction;
+                cin >> transaction;
+                makeTransaction(person, transaction);
+            } else {
+                cout << "Invalid name or password.\n";
+            }
+        } else if (option == 4) {
+            break;
+        }
+    }
+    return 0;
+}
+```
